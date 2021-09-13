@@ -66,6 +66,7 @@ public:
    * typedef for a callback for MacLowRx
    */
   typedef Callback<void, Ptr<Packet>, const WifiMacHeader*> MacLowRxCallback;
+  typedef Callback<void, Ptr<Packet>, const WifiMacHeader*, double> MacLowSnrRxCallback;
 
   MacLow ();
   virtual ~MacLow ();
@@ -267,6 +268,14 @@ public:
    * an instance of ns3::MacRxMiddle.
    */
   void SetRxCallback (Callback<void,Ptr<Packet>,const WifiMacHeader *> callback);
+
+  /* \param callback the callback which receives every incoming packet.
+  *
+  * This callback typically forwards incoming packets on scanning to
+  * an instance of ns3::MacRxMiddle.
+  */
+  void SetSnrRxCallback (Callback<void,Ptr<Packet>,const WifiMacHeader *, double> callback);
+
   /**
    * \param dcf listen to NAV events for every incoming and outgoing packet.
    */
@@ -420,6 +429,13 @@ public:
    *
    */
   void FlushAggregateQueue (uint8_t tid);
+
+  /**
+  * \param enable if true enable forward snr otherwise don't
+  *
+  * Higher mac layer need sometimes snr information while forward up packet.
+  */ 
+  void EnableForwardSnr (bool enable);
 
   /**
    * Return a TXVECTOR for the DATA frame given the destination.
@@ -609,6 +625,15 @@ private:
    *
    * \param duration
    */
+
+  WifiMode GetRtsTxMode (Ptr<const Packet> packet, const WifiMacHeader *hdr) const;
+  WifiMode GetDataTxMode (Ptr<const Packet> packet, const WifiMacHeader *hdr) const;
+  WifiMode GetCtsTxModeForRts (Mac48Address to, WifiMode rtsTxMode) const;
+  WifiMode GetAckTxModeForData (Mac48Address to, WifiMode dataTxMode) const;
+  Time GetCtsDuration (Mac48Address to, WifiMode rtsTxMode) const;
+  Time GetAckDuration (Mac48Address to, WifiMode dataTxMode) const;
+  Time GetBlockAckDuration (Mac48Address to, WifiMode blockAckReqTxMode, enum BlockAckType type) const;
+
   void DoNavResetNow (Time duration);
   /**
    * Check if NAV is zero.
@@ -859,7 +884,7 @@ private:
   Ptr<WifiPhy> m_phy; //!< Pointer to WifiPhy (actually send/receives frames)
   Ptr<WifiRemoteStationManager> m_stationManager; //!< Pointer to WifiRemoteStationManager (rate control)
   MacLowRxCallback m_rxCallback; //!< Callback to pass packet up
-
+  MacLowSnrRxCallback m_rxSnrCallback;
   /**
    * A struct for packet, Wifi header, and timestamp.
    */
@@ -927,6 +952,7 @@ private:
 
   bool m_promisc;  //!< Flag if the device is operating in promiscuous mode
   bool m_ampdu;    //!< Flag if the current transmission involves an A-MPDU
+  bool m_enableSnr;
 
   class PhyMacLowListener * m_phyMacLowListener; //!< Listener needed to monitor when a channel switching occurs.
 

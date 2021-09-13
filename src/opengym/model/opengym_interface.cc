@@ -194,7 +194,7 @@ OpenGymInterface::Init()
   // receive init ack msg form python
   ns3opengym::SimInitAck simInitAck;
   zmq::message_t reply;
-  (void) m_zmq_socket.recv (&reply);
+  m_zmq_socket.recv (&reply);
   simInitAck.ParseFromArray(reply.data(), reply.size());
 
   bool done = simInitAck.done();
@@ -261,7 +261,7 @@ OpenGymInterface::NotifyCurrentState()
   // receive act msg form python
   ns3opengym::EnvActMsg envActMsg;
   zmq::message_t reply;
-  (void) m_zmq_socket.recv (&reply);
+  m_zmq_socket.recv (&reply);
   envActMsg.ParseFromArray(reply.data(), reply.size());
 
   if (m_simEnd) {

@@ -44,6 +44,7 @@ public:
    * typedef for callback
    */
   typedef Callback<void, Ptr<Packet>, const WifiMacHeader*> ForwardUpCallback;
+  typedef Callback<void, Ptr<Packet>, const WifiMacHeader*,  double> ForwardUpSnrCallback;
 
   MacRxMiddle ();
   ~MacRxMiddle ();
@@ -54,6 +55,7 @@ public:
    * \param callback
    */
   void SetForwardCallback (ForwardUpCallback callback);
+  void SetForwardSnrCallback (ForwardUpSnrCallback callback);
 
   /**
    * Set a callback to trigger the next PCF frame.
@@ -69,6 +71,7 @@ public:
    * \param hdr MAC header
    */
   void Receive (Ptr<Packet> packet, const WifiMacHeader *hdr);
+  void SnrReceive (Ptr<Packet> packet, const WifiMacHeader *hdr, double rxSnr);
 
 
 private:
@@ -133,6 +136,7 @@ private:
   Originators m_originatorStatus; ///< originator status
   QosOriginators m_qosOriginatorStatus; ///< QOS originator status
   ForwardUpCallback m_callback; ///< forward up callback
+  ForwardUpSnrCallback m_snrCallback;
 
   Callback<void> m_pcfCallback; //!< PCF callback
 };

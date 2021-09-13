@@ -122,6 +122,7 @@ MacLow::MacLow ()
     m_cfpForeshortening (Seconds (0)),
     m_promisc (false),
     m_ampdu (false),
+    m_enableSnr (false),
     m_phyMacLowListener (0),
     m_ctsToSelfSupported (false),
     m_cfAckInfo ()
@@ -442,6 +443,12 @@ bool
 MacLow::IsPromisc (void) const
 {
   return m_promisc;
+}
+
+void 
+MacLow::SetSnrRxCallback (Callback<void,Ptr<Packet>,const WifiMacHeader *,  double> callback)
+{
+  m_rxSnrCallback = callback;
 }
 
 void
@@ -1074,7 +1081,15 @@ rxPacket:
     }
   WifiMacTrailer fcs;
   packet->RemoveTrailer (fcs);
-  m_rxCallback (packet, &hdr);
+  if (m_enableSnr)
+  {
+    NS_LOG_DEBUG ("enable snr receive " << m_enableSnr << rxSnr);
+    m_rxSnrCallback (packet, &hdr, rxSnr);
+  }
+  else
+  {
+    m_rxCallback (packet, &hdr);
+  }
   return;
 }
 
@@ -2878,6 +2893,12 @@ MacLow::FlushAggregateQueue (uint8_t tid)
       m_aggregateQueue[tid]->Flush ();
     }
   m_txPackets[tid].clear ();
+}
+
+void
+MacLow::EnableForwardSnr (bool enable)
+{
+  m_enableSnr = enable;
 }
 
 void

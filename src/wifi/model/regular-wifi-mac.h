@@ -24,6 +24,7 @@
 #include "wifi-mac.h"
 #include "qos-txop.h"
 #include "ssid.h"
+#include "ns3/mac-rx-middle.h"
 
 namespace ns3 {
 

@@ -87,7 +87,7 @@ def start_sim_script(port=5555, simSeed=0, simArgs={}, debug=False):
 	if debug:
 		# ns3Proc = subprocess.Popen(wafString, shell=True, stdout=None, stderr=None)
 
-		errorOutput = open("log/RLerror.log","w")
+		errorOutput = open("/tf/handover/scratch/handover/RLerror.log","w")
 		ns3Proc = subprocess.Popen(wafString, shell=True, stdout=None, stderr=errorOutput)
 		
 	else:

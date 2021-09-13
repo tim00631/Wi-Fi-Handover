@@ -25,7 +25,6 @@
 
 #include "infrastructure-wifi-mac.h"
 #include "mgt-headers.h"
-
 namespace ns3  {
 
 class SupportedRates;
@@ -106,6 +105,23 @@ public:
    * \brief Get the type ID.
    * \return the object TypeId
    */
+
+  enum MacScanType
+  {
+    NOTSUPPORT,
+    ACTIVE,
+    PASSIVE
+  };
+
+  struct ScanningEntry
+  {
+    uint16_t channelNumber;
+    Ssid ssid;
+    Mac48Address bssid;
+    double rxSnr;
+  };
+  typedef Callback<void, std::vector<ScanningEntry> const & > ScanningCallback;
+
   static TypeId GetTypeId (void);
 
   StaWifiMac ();
@@ -133,6 +149,22 @@ public:
    */
   void SetWifiPhy (const Ptr<WifiPhy> phy);
 
+  /**
+   * \param duration switching delay duration.
+   *
+   * This method is typically invoked by the PhyMacLowListener to notify
+   * the MAC layer that a channel switching occured. When a channel switching
+   * occurs, pending MAC transmissions (RTS, CTS, DATA and ACK) are cancelled.
+   */
+  void NotifySwitchingStartNow (Time duration);
+  /**
+   * This method is typically invoked by the PhyMacLowListener to notify
+   * the MAC layer that CCA(Clear Channel Assessment) becomes busy
+   */
+  void NotifyCcaBusyOccurred ();
+
+protected:
+  virtual void DoDispose ();
 
 private:
   /**
@@ -145,7 +177,8 @@ private:
     WAIT_PROBE_RESP,
     WAIT_ASSOC_RESP,
     UNASSOCIATED,
-    REFUSED
+    REFUSED,
+    SCANNING
   };
 
   /**
@@ -299,6 +332,16 @@ private:
 
   void DoInitialize (void);
 
+  void SetupStaMacListener (Ptr<WifiPhy> phy);
+  bool IsSupportScanning (void) const;
+  void ScanningStart (void);
+  void ScanningEnd (void);
+  void ScanningSwitchChannelStart (void);
+  void ScanningSwitchChannelEnd (void);
+  void ScanningMinChannelTimeout (void);
+  virtual void SnrReceive (Ptr<Packet> packet, const WifiMacHeader *hdr, double rxSnr);
+  void RunScanOrProbe (void);
+
   MacState m_state;            ///< MAC state
   Time m_waitBeaconTimeout;    ///< wait beacon timeout
   Time m_probeRequestTimeout;  ///< probe request timeout
@@ -310,6 +353,18 @@ private:
   Time m_beaconWatchdogEnd;    ///< beacon watchdog end
   uint32_t m_maxMissedBeacons; ///< maximum missed beacons
   bool m_activeProbing;        ///< active probing
+
+  class PhyStaMacListener * m_phyStaMacListener;
+  MacScanType m_scanType;
+  Time m_maxChannelTime;
+  Time m_minChannelTime;
+  uint16_t m_maxChannelNumber;
+  uint16_t m_scanChannelNumber;
+  bool m_bCcaBusyOccurred;
+  std::vector<ScanningEntry> m_scanResults;
+  EventId m_scanChannelEvent;
+  ScanningEntry* m_bestAP;
+
   std::vector<ApInfo> m_candidateAps; ///< list of candidate APs to associate
   // Note: std::multiset<ApInfo> might be a candidate container to implement
   // this sorted list, but we are using a std::vector because we want to sort

@@ -201,7 +201,6 @@ class Ns3ZmqBridge(object):
 
             self.newStateRx = True
         except zmq.error.Again as e:
-            # zmq socket may timeout here
             print('Time out')
             self.obsData = None
             self.reward = 0
